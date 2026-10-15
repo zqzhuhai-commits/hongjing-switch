@@ -2,7 +2,7 @@ name: Publish v0.3
 on:
   push:
     branches: [main]
-    paths: ['dist/RedAlert-CHS-v03-and-NSP.zip']
+    paths: ['dist/RedAlert-CHS-v03-and-NSP.zip', '.github/workflows/release.yml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -21,7 +21,7 @@ jobs:
           unzip -q dist/RedAlert-CHS-v03-and-NSP.zip -d unpacked
           cp unpacked/RedAlert-CHS-v03/patch/RedAlert.nro release/
           cp unpacked/RedAlert-CHS-v03/patch/EXPAND2.MIX release/
-          cp unpacked/RedAlert-CHS-v03/红色警戒.nsp release/
+          cp unpacked/RedAlert-CHS-v03/红色警戒.nsp release/RedAlert.nsp
           cp -R unpacked/RedAlert-CHS-v03/source source/project/
           cp README.md RELEASE_NOTES.md source/project/
           cp -R licenses docs source/project/
@@ -36,7 +36,14 @@ jobs:
         run: |
           set -euo pipefail
           if gh release view v0.3 >/dev/null 2>&1; then
-            echo 'v0.3 already exists; refusing to overwrite published assets.'
-            exit 1
+            existing=$(gh api repos/$GITHUB_REPOSITORY/releases/tags/v0.3 --jq '.assets[] | select(.name == "RedAlert-CHS-v03-and-NSP.zip") | .digest')
+            test "$existing" = 'sha256:0124e702e4ebaf132683facbb0c9eed9cc9932378e3572d75e1ff5d41f9835ab'
+            gh release download v0.3 --pattern Source-v0.3.zip --dir release --clobber
+            (cd release && sha256sum *.zip *.nro *.MIX *.nsp > SHA256SUMS.txt)
+            gh release upload v0.3 release/RedAlert.nsp release/SHA256SUMS.txt --clobber
+            if gh api repos/$GITHUB_REPOSITORY/releases/tags/v0.3 --jq '.assets[].name' | grep -qx 'default.nsp'; then
+              gh release delete-asset v0.3 default.nsp --yes
+            fi
+            exit 0
           fi
           gh release create v0.3 release/* --target "$GITHUB_SHA" --title '红色警戒 Switch 中文版 v0.3' --notes-file RELEASE_NOTES.md --latest
