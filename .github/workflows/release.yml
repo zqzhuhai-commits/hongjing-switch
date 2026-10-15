@@ -1,0 +1,42 @@
+name: Publish v0.3
+on:
+  push:
+    branches: [main]
+    paths: ['dist/RedAlert-CHS-v03-and-NSP.zip']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify and prepare release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '0124e702e4ebaf132683facbb0c9eed9cc9932378e3572d75e1ff5d41f9835ab  dist/RedAlert-CHS-v03-and-NSP.zip' | sha256sum --check
+          mkdir -p release source/engine source/forwarder source/project
+          cp dist/RedAlert-CHS-v03-and-NSP.zip release/
+          unzip -q dist/RedAlert-CHS-v03-and-NSP.zip -d unpacked
+          cp unpacked/RedAlert-CHS-v03/patch/RedAlert.nro release/
+          cp unpacked/RedAlert-CHS-v03/patch/EXPAND2.MIX release/
+          cp unpacked/RedAlert-CHS-v03/红色警戒.nsp release/
+          cp -R unpacked/RedAlert-CHS-v03/source source/project/
+          cp README.md RELEASE_NOTES.md source/project/
+          cp -R licenses docs source/project/
+          curl --fail --location --retry 3 https://codeload.github.com/capsterx-switch/Vanilla-Conquer/tar.gz/dbebd4181658cd8232c495bd12760a1d1bc00f99 | tar -xz --strip-components=1 -C source/engine
+          curl --fail --location --retry 3 https://codeload.github.com/TooTallNate/switch-nsp-forwarder/tar.gz/61edd504e57c6007f23a3a242b386ac0372c0cee | tar -xz --strip-components=1 -C source/forwarder
+          (cd source && zip -qr ../release/Source-v0.3.zip .)
+          (cd release && sha256sum *.zip *.nro *.MIX *.nsp > SHA256SUMS.txt)
+      - name: Create official release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v0.3 >/dev/null 2>&1; then
+            echo 'v0.3 already exists; refusing to overwrite published assets.'
+            exit 1
+          fi
+          gh release create v0.3 release/* --target "$GITHUB_SHA" --title '红色警戒 Switch 中文版 v0.3' --notes-file RELEASE_NOTES.md --latest

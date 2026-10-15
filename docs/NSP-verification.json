@@ -1,0 +1,31 @@
+{
+  "file": "红色警戒.nsp",
+  "bytes": 311000,
+  "sha256": "d8aaf5992ec722ed920ae47b9664b31ef6f67525d058ec54c2368d08eddb1ed5",
+  "title_id": "01d99376c0873000",
+  "display_name": "红色警戒",
+  "nro_path": "sdmc:/switch/redalert/RedAlert.nro",
+  "nca_files": [
+    {
+      "file": "eeea81fe86f51ecc80c77d1cc4d16f02.nca",
+      "bytes": 156160,
+      "type": 0
+    },
+    {
+      "file": "6fe81a9a212f3fed3126e795cc67241a.nca",
+      "bytes": 150528,
+      "type": 2
+    },
+    {
+      "file": "c6811c5f5afb3101d0e90c05c3151f6c.cnmt.nca",
+      "bytes": 4096,
+      "type": 1
+    }
+  ],
+  "header_decryption": "passed",
+  "container_hashes": "passed",
+  "section_header_hashes": "passed",
+  "exefs_and_romfs": "passed",
+  "nacp_and_icon": "passed",
+  "switch_runtime_tested": false
+}
